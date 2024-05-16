@@ -1,0 +1,3 @@
+freepygame包，提供文本等控件开发pygame程序
+
+by freebird

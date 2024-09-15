@@ -1,3 +1,5 @@
+"""一个框架"""
+
 import pygame
 import pygame.draw
 import pygame.colordict

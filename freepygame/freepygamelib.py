@@ -3,16 +3,7 @@
 import pygame
 import pygame.gfxdraw
 import pygame.draw
-import random
 
-BLACK = (0, 0, 0)
-WHITE = (255, 255, 255)
-RED = (255, 0, 0)
-YELLOW = (255, 255, 0)
-ORANGE = (255, 165, 0)
-GREEN = (0, 255, 0)
-BLUE = (0, 0, 255)
-PURPLE = (160, 32, 240)
 
 def _degree_to_radians(_degree):
 	return _degree * float(6.283185307179586 / 360)
@@ -270,89 +261,6 @@ class SuperText(FreeText):
 			raise StopIteration
 		return super().get_attribute().get("msg")[self.msg_len_next]
 
-class NaSuperText(SuperText):
-	def __init__(self, screen, coordinates, rect, msg, font = 'SimHei', size = 24, color = (0, 0, 0)):
-		"""初始化文本:
-		screen -> 设置的窗口, coordinates[x,y] -> 文本左上角坐标, msg -> 文本, rect -> 限定范围, font -> 字体,
-		size -> 文本大小, color(R,G,B) -> 文本颜色"""
-		super().__init__(screen, coordinates, msg, font, size, color)
-		self.rect = pygame.Rect(0, 0, rect[0], rect[1])
-		self.rect.centerx = self.x + rect[0] / 2
-		self.rect.centery = self.y + rect[1] / 2
-		self.msg_img = self._font.render(self.msg, True, self.color, None)
-		self.msg_img_rect = self.msg_img.get_rect()
-		self.msg_img_rect.center = self.rect.center
-		
-class MidSuperText(SuperText):
-	def __init__(self, screen, coordinates, rect, msg, font = 'SimHei', size = 24, color = (0, 0, 0), dsm = 1):
-		super().__init__(screen, coordinates, msg, font, size, color, dsm)
-		self.rect = pygame.Rect(0, 0, rect[0] * self.dsm, rect[1] * self.dsm)
-		self.rect.centerx = (self.x + rect[0] / 2)
-		self.rect.centery = (self.y + rect[1] / 2)
-		self.img_text = self._font.render(self.msg, True, self.color, (0, 0, 0)).convert()
-		self.img_text_rect = self.img_text.get_rect()
-		self.img_text_rect.center = self.rect.center
-		
-	def draw(self):
-		"""绘制文本"""
-		self.screen.blit(self.img_text, self.img_text_rect)
-		
-class FreeMsg():
-	def __init__(self, screen, coordinates, rect, msg, font, size, color, highlight, dsm):
-		self.screen = screen
-		self.coordinates = coordinates
-		self.rect = rect
-		self.msg = msg
-		self.font = font
-		self.size = size
-		self.color = color
-		self.highlight = highlight
-		self.dsm = dsm
-		self._font = pygame.font.Font(font, 20)
-		self.img_text = self._font.render(self.msg, True, color)
-		self.write = False
-		self.text = ""
-		self.rect_pos = [self.coordinates, (self.coordinates[0] + self.rect[0], self.coordinates[1]),
-		                 (), (self.coordinates[0] + self.rect[0], self.coordinates[1] + self.rect[1])]
-		
-	def get_coordinates(self):
-		return self.rect_pos
-		
-	def write_start(self):
-		self.write = True
-		
-	def write(self, text):
-		self.msg = self.msg + text
-		self.img_text = self._font.render(self.msg, True, self.color)
-		
-	def write_end(self):
-		self.write = False
-		
-	def write_type(self):
-		return self.write
-		
-	def check(self, text):
-		if self.write is True:
-			return False
-		else:
-			if self.msg == text:
-				return True
-			else:
-				return False
-			
-	def delete(self):
-		if self.write is not True:
-			self.text = ""
-			self.img_text = self._font.render("", True, self.color)
-			return True
-		else:
-			return False
-		
-	def draw(self):
-		self.screen.blit(self.img_text, (self.coordinates[0], self.coordinates[1]))
-		if self.write is True:
-			pygame.draw.rect(self.screen, self.highlight, (self.coordinates[0], self.coordinates[1],
-			                                               self.rect[0], self.rect[1]))
 
 class FreeButton():
 	"""自定义按钮类"""
@@ -710,69 +618,7 @@ class CircleButton(FreeCircle):
 		if msg_tran is True: self.msg_img.colorkeys(self.button_color)
 		self.msg_tran = msg_tran
 		
-class Particle(pygame.sprite.Sprite):
-    def __init__(self, pos, velocity, acceleration, lifespan):
-        super().__init__()
-        self.image = pygame.Surface((2, 2))
-        self.rect = self.image.get_rect()
-        self.pos = pygame.math.Vector2(pos)
-        self.velocity = pygame.math.Vector2(velocity)
-        self.acceleration = pygame.math.Vector2(acceleration)
-        self.lifespan = lifespan
 
-    def update(self):
-        self.velocity += self.acceleration
-        self.pos += self.velocity
-        self.lifespan -= 1
-
-        if self.lifespan <= 0:
-            self.kill()
-            
-class ParticleEngine:
-    def __init__(self):
-        self.particles = pygame.sprite.Group()
-
-    def generate_particles(self, num_particles, pos):
-        for _ in range(num_particles):
-            particle = Particle(pos, (0, 0), (0, 0.1), 100)
-            self.particles.add(particle)
-
-    def update_particles(self):
-        self.particles.update()
-
-    def draw_particles(self, surface):
-        self.particles.draw(surface)
-
-
-class Fireworks:
-    def __init__(self, x, y, color):
-        self.x = x
-        self.y = y
-        self.color = color
-        self.radius = 5
-        self.vx = random.uniform(-5, 5)
-        self.vy = random.uniform(-15, -5)
-        self.gravity = 0.5
-    
-    def update(self):
-        self.vx *= 0.98
-        self.vy += self.gravity
-        self.x += self.vx
-        self.y += self.vy
-    
-    def draw(self, surface):
-        pygame.draw.circle(surface, self.color, (int(self.x), int(self.y)), self.radius)
-
-
-def explode(x, y):
-    particles = []
-    for _ in range(100):
-        color = random.choice([RED, YELLOW, ORANGE, GREEN, BLUE, PURPLE])
-        particle = Fireworks(x, y, color)
-        particles.append(particle)
-    
-    return particles
-    
 def _array_mean(number_list):
     number_list_len = len(number_list) - 1
     number_list_array_mean = 0
@@ -826,4 +672,4 @@ def image_blur_processing(image, level):
     return image
 
 if __name__ == '__main__':
-	print("freebird的pygame自定义模块\n", __all__)
+	print("freebird的pygame自定义模块\n")

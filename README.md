@@ -24,8 +24,8 @@ pip install freepygame
 或者从源代码安装:
 
 ```bash
-git clone https://github.com/yourusername/freepygame.git
-cd freepygame
+git clone https://github.com/freebird/freebPygame.git
+cd freebPygame
 pip install -e .
 ```
 
@@ -241,19 +241,6 @@ circle << ((80, 60),)   # 设置长短半轴
 circle << ((255, 0, 0),) # 设置颜色
 ```
 
-### 烟花效果
-```python
-from freepygame import explode, Fireworks
-
-# 创建爆炸效果
-particles = explode(x, y)
-
-# 更新和绘制烟花
-for particle in particles:
-    particle.update()
-    particle.draw(screen)
-```
-
 ## 示例
 
 查看 `examples/` 目录获取完整示例：
@@ -268,56 +255,7 @@ cd examples
 python basic_demo.py
 ```
 
-## API 文档
-
-### FreeButton 类
-
-#### 方法
-- `get_attribute()` - 获取按钮所有属性
-- `get_coordinates()` - 获取按钮四个角的坐标
-- `set_msg(msg)` - 设置按钮文本
-- `set_button_color(color)` - 设置按钮背景色
-- `set_text_color(color)` - 设置文本颜色
-- `open_border(enable)` - 显示/隐藏边框
-- `open_line(enable)` - 显示/隐藏对角线
-- `draw()` - 绘制按钮
-
-### FreeCircle 类
-
-#### 方法
-- `get_attribute()` - 获取圆形所有属性
-- `get_center_coordinates()` - 获取圆心坐标
-- `get_coordinates()` - 获取外切矩形坐标
-- `set_radius(radius)` - 设置半径
-- `set_color(color)` - 设置颜色
-- `set_angle(angle)` - 设置角度范围
-- `open_border(enable)` - 显示/隐藏边框
-- `draw()` - 绘制圆形
-
-## 开发指南
-
-### 运行测试
-```bash
-# 安装测试依赖
-pip install pytest
-
-# 运行所有测试
-pytest tests/
-
-# 运行特定测试
-pytest tests/test_components/test_buttons.py
-
-# 快速测试（跳过慢速测试）
-pytest tests/ --quick
-```
-
-### 代码规范
-- 使用类型注解
-- 遵循 PEP 8 代码风格
-- 添加中文和英文文档字符串
-- 编写单元测试
-
-### 项目结构
+## 项目结构
 ```
 freepygame/
 ├── freepygame/          # 主包目录
@@ -347,12 +285,6 @@ freepygame/
 
 欢迎提交 Issue 和 Pull Request！
 
-1. Fork 本仓库
-2. 创建功能分支 (`git checkout -b feature/amazing-feature`)
-3. 提交更改 (`git commit -m 'Add some amazing feature'`)
-4. 推送到分支 (`git push origin feature/amazing-feature`)
-5. 开启 Pull Request
-
 ## 作者
 
 freebird
@@ -360,8 +292,7 @@ freebird
 ## 致谢
 
 - [Pygame](https://www.pygame.org/) - 游戏开发库
-- 所有贡献者和用户
 
 ---
 
-**注意**: 本库仍在积极开发中，API 可能会有变动。建议在生产环境中使用时锁定版本号。
+**注意**: 本库仍在积极开发中，API 可能会有变动。

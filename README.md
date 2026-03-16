@@ -3,6 +3,8 @@
 一个为 Pygame 游戏开发提供 UI 控件和工具的 Python 库。
 
 [![License](https://img.shields.io/badge/License-Apache%202.0-blue.svg)](https://opensource.org/licenses/Apache-2.0)
+[![PyPI version](https://badge.fury.io/py/freepygame.svg)](https://badge.fury.io/py/freepygame)
+[![PyPI downloads](https://img.shields.io/pypi/dm/freepygame.svg)](https://pypi.org/project/freepygame/)
 [![Python](https://img.shields.io/badge/Python-3.7%2B-blue)](https://www.python.org/)
 [![Pygame](https://img.shields.io/badge/Pygame-2.0%2B-orange)](https://www.pygame.org/)
 

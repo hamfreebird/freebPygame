@@ -14,7 +14,7 @@ def get_version():
         for line in f:
             if line.startswith("__version__"):
                 return line.split("=")[1].strip().strip("\"'")
-    return "0.1.0"
+    return "0.1.1"
 
 
 # 读取 README 文件

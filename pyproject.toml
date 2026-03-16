@@ -4,7 +4,7 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "freepygame"
-version = "0.1.0"
+version = "0.1.1"
 description = "A Pygame UI controls library providing buttons, text, circles and other widgets"
 readme = "README.md"
 authors = [

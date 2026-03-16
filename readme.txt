@@ -1,8 +1,0 @@
-freepygame包，提供文本等控件开发pygame程序
-
-注：
-freepygamelib.py是freepygame包的单文件精简版
-所有的控件和功能都依赖pygame
-
-
-by freebird

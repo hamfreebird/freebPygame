@@ -18,6 +18,8 @@ Example:
     >>> app.run()
 """
 
+from __future__ import annotations
+
 import time
 from typing import Optional, Tuple
 
@@ -25,7 +27,7 @@ import pygame
 import pygame.colordict
 import pygame.draw
 
-from freepygame.freetext import SuperText
+from .freetext import SuperText
 
 
 class FreeFrame:
@@ -97,6 +99,7 @@ class FreeFrame:
         self.fps = fps
         self.background_color = background_color
         self.running = False
+        self.widgets = []
 
         # Set up display
         pygame.display.set_caption(title)
@@ -121,8 +124,18 @@ class FreeFrame:
             color=pygame.colordict.THECOLORS.get("grey70"),
         )
 
-        # Optional buffer surface for advanced rendering
-        self.buffer = pygame.Surface(size)
+    def add_widget(self, widget):
+        """
+        Register a widget (button, slider, checkbox, etc.) with the application.
+
+        Registered widgets are drawn by the caller's ``draw`` override and
+        receive click events automatically via :meth:`handle_events`.
+
+        Returns:
+            The same widget, so calls can be chained.
+        """
+        self.widgets.append(widget)
+        return widget
 
     def handle_events(self) -> None:
         """
@@ -139,6 +152,14 @@ class FreeFrame:
         for event in pygame.event.get():
             if event.type == pygame.QUIT:
                 self.running = False
+            elif event.type == pygame.MOUSEBUTTONDOWN:
+                # Dispatch clicks to registered widgets (buttons, checkboxes,
+                # sliders, etc.). Components without a handle_click method are
+                # skipped. Later-added widgets are checked first (top of stack).
+                for widget in reversed(self.widgets):
+                    handler = getattr(widget, "handle_click", None)
+                    if handler is not None and handler(event.pos):
+                        break
 
     def update(self) -> None:
         """

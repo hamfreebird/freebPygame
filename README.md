@@ -215,6 +215,61 @@ if position_button_class(button, pos):
     print("点在按钮内")
 ```
 
+## 控件、主题与布局
+
+### 点击回调（Clickable）
+
+`FreeButton` 与 `CircleButton` 内置 `Clickable` 混入，可注册点击回调，不再需要手动 `position_button_class` 判断：
+
+```python
+button = FreeButton(screen, [100, 100], [200, 50], msg="确定")
+button.set_callback(lambda btn: print("clicked!", btn.msg))
+# 在主循环的事件处理中：
+if event.type == pygame.MOUSEBUTTONDOWN:
+    button.handle_click(event.pos)   # 命中则触发回调并返回 True
+```
+
+`FreeFrame` 会自动承载控件并分发点击事件：
+
+```python
+app = FreeFrame(title="Demo")
+app.add_widget(button)
+# app.run() 时，点击事件会自动派发到已注册的控件
+```
+
+### 主题系统
+
+```python
+from freepygame import get_theme, apply_theme
+
+apply_theme(button, get_theme("dark"))   # 内置 light / dark
+```
+
+### 基础控件
+
+```python
+from freepygame import ProgressBar, Slider, CheckBox
+
+pb = ProgressBar(screen, [20, 20], width=200, value=0.5)
+pb.set_value(0.8); pb.draw()
+
+sl = Slider(screen, [20, 60], width=200, min_value=0, max_value=100, value=20)
+sl.set_from_pos(pygame.mouse.get_pos())   # 根据指针位置设定值
+
+ck = CheckBox(screen, [20, 100], size=24, checked=False)
+ck.on_toggle = lambda checked: print("checked:", checked)
+```
+
+### 布局管理器
+
+```python
+from freepygame import VBox, HBox, AnchorLayout
+
+VBox([button, pb, sl], spacing=10, padding=10).arrange(origin=(20, 20))
+HBox([button, pb], spacing=8).arrange(origin=(20, 20))
+AnchorLayout([pb], align="center").arrange(origin=(400, 300))
+```
+
 ## 高级特性
 
 ### 操作符重载
@@ -237,7 +292,7 @@ text + " World!"        # 文本变为 "Hello World!"
 circle = SuperCircle(screen, [400, 300], 50)
 
 circle << (75,)         # 设置半径
-circle << ((80, 60),)   # 设置长短半轴
+circle << ((80, 60),)   # 设置椭圆半轴（外接矩形 rect）
 circle << ((255, 0, 0),) # 设置颜色
 ```
 
@@ -245,14 +300,17 @@ circle << ((255, 0, 0),) # 设置颜色
 ```
 freepygame/
 ├── freepygame/          # 主包目录
-│   ├── __init__.py     # 包初始化
-│   ├── freebutton.py   # 按钮组件
-│   ├── freecircle.py   # 圆形组件
+│   ├── __init__.py     # 包初始化（重导出所有规范实现）
+│   ├── freebutton.py   # 按钮组件 + Clickable 回调混入
+│   ├── freecircle.py   # 圆形/弧形/曲线组件
 │   ├── freetext.py     # 文本组件
-│   ├── freeicon.py     # 图标组件
-│   ├── freeparticle.py # 粒子系统
-│   ├── freetransformation.py # 图像处理
-│   └── freepygamelib.py # 单文件版本
+│   ├── freeicon.py     # 图标 / 点 / 抗锯齿矩形
+│   ├── freeparticle.py # 粒子系统 / 烟花
+│   ├── freetransformation.py # 图像处理（模糊/取色）
+│   ├── freetheme.py    # 主题系统
+│   ├── freewidget.py   # 基础控件（进度条/滑块/复选框）
+│   ├── freelayout.py   # 布局管理器（盒式/锚点）
+│   └── freeframe.py    # 窗口/应用框架
 ├── tests/              # 测试目录
 │   ├── conftest.py    # 测试配置
 │   ├── test_components/ # 组件测试

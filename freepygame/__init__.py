@@ -39,22 +39,43 @@ __version__ = "0.1.0"
 __author__ = "freebird"
 __license__ = "Apache License 2.0"
 
-# Export main classes
-from .freebutton import CircleButton, FreeButton, position_button, position_button_class
-from .freecircle import FreeAllCircle, FreeCircle, SuperCircle
-from .freeicon import FreeIcon
+# The library is implemented across modular files (freebutton, freecircle,
+# freetext, freeicon, freeparticle, freetransformation, freeframe). This
+# package simply re-exports the canonical symbols so callers can do
+# `from freepygame import FreeButton` etc.
+from .freebutton import (
+    CircleButton,
+    Clickable,
+    FreeButton,
+    position_button,
+    position_button_class,
+)
+from .freecircle import (
+    FreeAllCircle,
+    FreeCircle,
+    SuperCircle,
+    _degree_to_radians,
+)
+from .freetext import FreeText, SuperText
+from .freeicon import FreeAARectangle, FreeIcon, Point
 from .freeparticle import Fireworks, Particle, ParticleEngine, explode
-
-# Export all content from freepygamelib
-from .freepygamelib import *
-from .freetext import FreeMsg, FreeText, MidSuperText, NaSuperText, SuperText
-from .freetransformation import array_mean_rgba, image_blur_processing, map_to_rgba
+from .freetransformation import (
+    _array_mean,
+    array_mean_rgba,
+    image_blur_processing,
+    map_to_rgba,
+)
+from .freetheme import THEMES, Theme, apply_theme, get_theme
+from .freewidget import CheckBox, ProgressBar, Slider, Widget
+from .freelayout import AnchorLayout, HBox, Layout, VBox
+from .freeframe import FreeFrame
 
 # Define __all__ for "from freepygame import *"
 __all__ = [
     # Button components
     "FreeButton",
     "CircleButton",
+    "Clickable",
     "position_button",
     "position_button_class",
     # Circle components
@@ -64,11 +85,10 @@ __all__ = [
     # Text components
     "FreeText",
     "SuperText",
-    "NaSuperText",
-    "MidSuperText",
-    "FreeMsg",
     # Other components
     "FreeIcon",
+    "Point",
+    "FreeAARectangle",
     # Particle system
     "Particle",
     "ParticleEngine",
@@ -78,6 +98,26 @@ __all__ = [
     "image_blur_processing",
     "array_mean_rgba",
     "map_to_rgba",
+    # Internal helpers
+    "_degree_to_radians",
+    "_array_mean",
+    # Window / app framework
+    "FreeFrame",
+    # Theme system
+    "Theme",
+    "THEMES",
+    "get_theme",
+    "apply_theme",
+    # Widgets
+    "Widget",
+    "ProgressBar",
+    "Slider",
+    "CheckBox",
+    # Layout managers
+    "Layout",
+    "VBox",
+    "HBox",
+    "AnchorLayout",
     # Version info
     "__version__",
     "__author__",

@@ -43,6 +43,10 @@ dev = [
     "black>=23.0.0",
     "flake8>=6.0.0",
     "mypy>=1.0.0",
+    "ruff>=0.4.0",
+]
+fast = [
+    "numpy>=1.21.0",
 ]
 
 [tool.setuptools]
@@ -80,3 +84,17 @@ addopts = [
     "--strict-config",
     "--tb=short",
 ]
+
+[tool.ruff]
+line-length = 100
+target-version = "py37"
+
+[tool.ruff.lint]
+# pycodestyle errors/warnings + pyflakes; keep the gate light so it does not
+# block CI on pre-existing style nits. `I` (isort) is intentionally omitted to
+# avoid reordering the existing import blocks.
+select = ["E", "F", "W"]
+ignore = ["E501"]
+
+[tool.ruff.lint.per-file-ignores]
+"tests/*" = ["F401", "F811"]

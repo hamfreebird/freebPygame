@@ -13,6 +13,7 @@ from freepygame import (
     FreeIcon,
     Particle,
     ParticleEngine,
+    _array_mean,
     array_mean_rgba,
     explode,
     image_blur_processing,
@@ -211,62 +212,65 @@ class TestParticleSystem:
 
 
 class TestFireworks:
-    """测试烟花效果"""
+    """测试烟花效果（对齐当前 freeparticle.Fireworks 实现）"""
 
     def test_fireworks_creation(self):
         """测试烟花创建"""
-        # 设置随机种子以确保测试可重复
-        random.seed(42)
-
         fireworks = Fireworks(400, 300, (255, 0, 0))
 
         assert fireworks is not None
         assert fireworks.x == 400
         assert fireworks.y == 300
         assert fireworks.color == (255, 0, 0)
-        assert fireworks.radius == 5
-        assert fireworks.gravity == 0.5
-
-        # 速度应该在预期范围内
-        assert -5 <= fireworks.vx <= 5
-        assert -15 <= fireworks.vy <= -5
+        assert fireworks.velocity == -8.0
+        assert fireworks.exploded is False
+        assert fireworks.trail_particles == []
+        assert fireworks.explosion_particles == []
 
     def test_fireworks_update(self):
-        """测试烟花更新"""
-        # 设置随机种子
+        """测试烟花更新：上升 + 重力，且 update() 返回是否为活动状态"""
         random.seed(42)
 
         fireworks = Fireworks(400, 300, (255, 0, 0))
+        y0, v0 = fireworks.y, fireworks.velocity
 
-        # 记录初始状态
-        initial_x = fireworks.x
-        initial_y = fireworks.y
-        initial_vx = fireworks.vx
-        initial_vy = fireworks.vy
+        ret = fireworks.update()
 
-        # 更新烟花
-        fireworks.update()
+        # 物理：先按旧速度上升，再受重力减速
+        assert isinstance(ret, bool)
+        assert fireworks.y == y0 + v0
+        assert fireworks.velocity == v0 + 0.2
+        # 起始速度向上（为负），尚未到达顶点，不会爆炸
+        assert fireworks.exploded is False
 
-        # 检查速度衰减（vx乘以0.98）
-        expected_vx = initial_vx * 0.98
-        assert fireworks.vx == pytest.approx(expected_vx, abs=1e-6)
+    def test_fireworks_update_explodes_at_apex(self):
+        """测试烟花到达顶点后自动爆炸并填充爆炸粒子"""
+        random.seed(42)
 
-        # 检查重力影响（vy增加重力）
-        expected_vy = initial_vy + fireworks.gravity
-        assert fireworks.vy == pytest.approx(expected_vy, abs=1e-6)
+        fireworks = Fireworks(400, 300, (255, 0, 0))
+        # 持续更新直到自动爆炸
+        for _ in range(60):
+            fireworks.update()
+            if fireworks.exploded:
+                break
 
-        # 检查位置更新
-        expected_x = initial_x + fireworks.vx
-        expected_y = initial_y + fireworks.vy
-        assert fireworks.x == pytest.approx(expected_x, abs=1e-6)
-        assert fireworks.y == pytest.approx(expected_y, abs=1e-6)
+        assert fireworks.exploded is True
+        assert len(fireworks.explosion_particles) > 0
+        # 爆炸粒子是普通字典，包含位置/颜色/生命等字段
+        particle = fireworks.explosion_particles[0]
+        assert "x" in particle and "y" in particle
+        assert "color" in particle and "life" in particle
 
     def test_fireworks_draw_no_error(self, test_screen):
         """测试绘制烟花不抛出错误"""
-        # 设置随机种子
         random.seed(42)
 
         fireworks = Fireworks(400, 300, (255, 0, 0))
+        # 推进若干帧并触发爆炸后再绘制
+        for _ in range(60):
+            fireworks.update()
+        fireworks.explode()
+        fireworks.draw(test_screen)
 
         # 绘制应该不抛出异常
         try:
@@ -274,33 +278,22 @@ class TestFireworks:
         except Exception as e:
             pytest.fail(f"绘制烟花时抛出异常: {e}")
 
-    def test_explode_function(self):
-        """测试爆炸函数"""
-        # 设置随机种子
-        random.seed(42)
 
-        particles = explode(400, 300)
+def test_explode_function():
+    """测试爆炸函数：返回填充好粒子的 ParticleEngine"""
+    random.seed(42)
 
-        assert particles is not None
-        assert isinstance(particles, list)
-        assert len(particles) == 100
+    engine = explode((400, 300))
 
-        # 检查所有粒子都是Fireworks实例
-        for particle in particles:
-            assert isinstance(particle, Fireworks)
-            assert particle.x == 400
-            assert particle.y == 300
+    assert engine is not None
+    assert isinstance(engine, ParticleEngine)
+    assert len(engine.particles) == 100
 
-            # 颜色应该是预定义的颜色之一
-            predefined_colors = [
-                (255, 0, 0),  # RED
-                (255, 255, 0),  # YELLOW
-                (255, 165, 0),  # ORANGE
-                (0, 255, 0),  # GREEN
-                (0, 0, 255),  # BLUE
-                (160, 32, 240),  # PURPLE
-            ]
-            assert particle.color in predefined_colors
+    # 检查所有粒子都是 Particle 实例且起始位置正确
+    for particle in engine.particles:
+        assert isinstance(particle, Particle)
+        assert particle.pos == pygame.math.Vector2(400, 300)
+
 
 
 class TestTransformationFunctions:
@@ -310,18 +303,18 @@ class TestTransformationFunctions:
         """测试基础数组平均值计算"""
         # 测试正常情况
         numbers = [1, 2, 3, 4, 5]
-        result = array_mean_rgba._array_mean(numbers)  # 注意：需要访问内部函数
+        result = _array_mean(numbers)  # 注意：需要访问内部函数
         expected = (1 + 2 + 3 + 4 + 5) / 5
         assert result == pytest.approx(expected, abs=1e-6)
 
         # 测试空列表
         empty_list = []
-        result = array_mean_rgba._array_mean(empty_list)
+        result = _array_mean(empty_list)
         assert result == 0
 
         # 测试单个元素
         single = [42]
-        result = array_mean_rgba._array_mean(single)
+        result = _array_mean(single)
         assert result == 42
 
     def test_array_mean_rgba(self):

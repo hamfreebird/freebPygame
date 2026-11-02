@@ -1,10 +1,16 @@
 """
 Image transformation utilities for Pygame applications.
 
-This module provides image processing functions for blur effects,
-color averaging, and RGBA data manipulation.
+This module provides image-processing functions for blur effects, color
+averaging, and RGBA data manipulation.
+
+It is the canonical implementation for image transformations and is re-exported
+by the top-level ``freepygame`` package.
 """
 
+from __future__ import annotations
+
+import pygame
 from typing import List, Tuple
 
 
@@ -12,34 +18,11 @@ def _array_mean(number_list: List[float]) -> float:
     """
     Calculate the arithmetic mean of a list of numbers.
 
-    Args:
-        number_list: List of numbers to calculate the mean of
-
-    Returns:
-        The arithmetic mean of the numbers in the list
-
-    Note:
-        This is an internal utility function used by array_mean_rgba.
-        Returns 0 if the list is empty to avoid ZeroDivisionError.
-
-    Example:
-        >>> _array_mean([1, 2, 3, 4, 5])
-        3.0
-        >>> _array_mean([])
-        0.0
+    Returns 0.0 for an empty list to avoid ZeroDivisionError.
     """
-    number_list_len = len(number_list) - 1
-    number_list_array_mean = 0.0
-
-    for number in range(0, number_list_len):
-        number_list_array_mean += number_list[number]
-
-    try:
-        number_list_array_mean /= number_list_len + 1
-    except ZeroDivisionError:
-        number_list_array_mean = 0.0
-
-    return number_list_array_mean
+    if not number_list:
+        return 0.0
+    return sum(number_list) / len(number_list)
 
 
 def array_mean_rgba(
@@ -48,29 +31,13 @@ def array_mean_rgba(
     """
     Calculate the average RGBA color from separate channel lists.
 
-    Args:
-        rgba: A tuple containing four lists:
-            - List of red channel values
-            - List of green channel values
-            - List of blue channel values
-            - List of alpha channel values
-
-    Returns:
-        A tuple containing the average (R, G, B, A) values as integers
-
-    Example:
-        >>> reds = [100, 150, 200]
-        >>> greens = [50, 100, 150]
-        >>> blues = [0, 50, 100]
-        >>> alphas = [255, 255, 255]
-        >>> array_mean_rgba((reds, greens, blues, alphas))
-        (150, 100, 50, 255)
+    ``rgba`` is a tuple of four lists: (R values, G values, B values, A values).
+    Returns the average (R, G, B, A) as integers.
     """
     r = int(_array_mean(rgba[0]))
     g = int(_array_mean(rgba[1]))
     b = int(_array_mean(rgba[2]))
     a = int(_array_mean(rgba[3]))
-
     return (r, g, b, a)
 
 
@@ -80,104 +47,91 @@ def map_to_rgba(
     """
     Extract and separate RGBA channels from a 2D array of pixel data.
 
-    Args:
-        part: A 2D list of pixel tuples, where each pixel can be:
-            - (R, G, B) for RGB format
-            - (R, G, B, A) for RGBA format
-
-    Returns:
-        A tuple containing four lists:
-            - List of red channel values
-            - List of green channel values
-            - List of blue channel values
-            - List of alpha channel values (defaults to 255 if not provided)
-
-    Note:
-        If alpha channel is not provided in the pixel data, it defaults to 255 (fully opaque).
-
-    Example:
-        >>> pixels = [
-        ...     [(255, 0, 0), (0, 255, 0)],
-        ...     [(0, 0, 255), (255, 255, 255, 128)]
-        ... ]
-        >>> map_to_rgba(pixels)
-        ([255, 0, 0, 255], [0, 255, 0, 255], [0, 0, 255, 255], [255, 255, 255, 128])
+    Each pixel may be (R, G, B) or (R, G, B, A). Missing alpha defaults to 255
+    only for RGBA pixels; for pixels that never carry alpha, the returned alpha
+    list is empty.
     """
     r, g, b, a = [], [], [], []
 
-    for x in range(0, len(part) - 1):
-        for y in range(0, len(part) - 1):
+    for x in range(0, len(part)):
+        for y in range(0, len(part[x])):
             pixel = part[x][y]
             r.append(pixel[0])
             g.append(pixel[1])
             b.append(pixel[2])
-
             if len(pixel) == 4:
                 a.append(pixel[3])
-            else:
-                a.append(255)  # Default alpha for RGB pixels
 
     return r, g, b, a
 
 
 def image_blur_processing(image, level: int = 2):
     """
-    Apply a box blur effect to a Pygame image surface.
+    Apply a box-blur effect to a Pygame image surface (in-place).
 
-    Args:
-        image: Pygame Surface object to blur
-        level: Blur intensity level (higher values = more blur, default: 2)
-
-    Returns:
-        The blurred Pygame Surface (modified in-place)
-
-    Note:
-        This function modifies the original image surface in-place.
-        The blur is applied using a box blur algorithm with a kernel size
-        determined by the level parameter.
-
-    Example:
-        >>> import pygame
-        >>> pygame.init()
-        >>> image = pygame.Surface((100, 100))
-        >>> image.fill((255, 0, 0))
-        >>> blurred_image = image_blur_processing(image, level=3)
-        >>> # image is now blurred
+    Uses a fast NumPy / SurfaceArray path when available and falls back to a
+    corrected per-pixel loop otherwise. Returns the SAME surface object it was
+    given (modified in place).
     """
-    _size = image.get_size()
+    try:
+        import numpy as np
+        from pygame import surfarray
+    except Exception:
+        return _image_blur_fallback(image, level)
 
-    # Create 2D arrays for old and new pixel data
-    _old_image_pixels = [[None for _ in range(0, _size[0])] for _ in range(0, _size[1])]
-    _new_image_pixels = [[None for _ in range(0, _size[0])] for _ in range(0, _size[1])]
+    arr = surfarray.array3d(image).astype(np.int32)  # (width, height, 3)
+    w, h, _ = arr.shape
+    k = max(0, int(level))
+    if k == 0:
+        return image
 
-    boundary_width = level + 1
+    acc = np.zeros_like(arr)
+    xs = np.arange(w)
+    ys = np.arange(h)
+    for dx in range(-k, k + 1):
+        for dy in range(-k, k + 1):
+            x_idx = np.clip(xs + dx, 0, w - 1)
+            y_idx = np.clip(ys + dy, 0, h - 1)
+            acc += arr[np.ix_(x_idx, y_idx)]
+    acc //= (2 * k + 1) ** 2
 
-    # Extract all pixel data from the image
-    for x in range(0, _size[0]):
-        for y in range(0, _size[1]):
-            _old_image_pixels[x][y] = image.get_at((x, y))
+    has_alpha = bool(image.get_flags() & pygame.SRCALPHA)
+    try:
+        if has_alpha:
+            alpha = surfarray.array_alpha(image)
+            rgba = np.dstack((acc, alpha)).astype(np.uint8)
+            surfarray.blit_array(image, rgba)
+        else:
+            surfarray.blit_array(image, acc.astype(np.uint8))
+    except Exception:
+        return _image_blur_fallback(image, level)
+    return image
 
-    # Apply blur to each pixel
-    for x in range(0, _size[0]):
-        for y in range(0, _size[1]):
-            ready_part = []
 
-            try:
-                # Extract neighborhood pixels for blurring
-                for unit in _old_image_pixels[x - boundary_width : x + boundary_width]:
-                    ready_part.append(unit[y - boundary_width : y + boundary_width])
+def _image_blur_fallback(image, level):
+    """Corrected per-pixel box-blur fallback (no NumPy dependency)."""
+    w, h = image.get_size()
+    k = max(0, int(level))
+    if k == 0:
+        return image
 
-                # Calculate average color of neighborhood
-                pixels = array_mean_rgba(map_to_rgba(ready_part))
-            except IndexError:
-                # Handle edge pixels by using a neutral gray
-                pixels = (125, 125, 125, 125)
+    old = [[image.get_at((x, y)) for y in range(h)] for x in range(w)]
+    new = [[None for _ in range(h)] for _ in range(w)]
+    has_alpha = bool(image.get_flags() & pygame.SRCALPHA)
 
-            _new_image_pixels[x][y] = pixels
+    for x in range(w):
+        for y in range(h):
+            x0, x1 = max(0, x - k), min(w - 1, x + k)
+            y0, y1 = max(0, y - k), min(h - 1, y + k)
+            neighborhood = [
+                [old[i][j] for j in range(y0, y1 + 1)] for i in range(x0, x1 + 1)
+            ]
+            color = array_mean_rgba(map_to_rgba(neighborhood))
+            if not has_alpha:
+                color = color[:3]
+            new[x][y] = color
 
-    # Apply blurred pixels back to the image
-    for x in range(0, _size[0]):
-        for y in range(0, _size[1]):
-            image.set_at((x, y), _new_image_pixels[x][y])
-
+    for x in range(w):
+        for y in range(h):
+            image.set_at((x, y), new[x][y])
     return image

@@ -44,6 +44,17 @@ setup(
     install_requires=[
         "pygame>=2.0.0",
     ],
+    extras_require={
+        "fast": ["numpy>=1.21.0"],
+        "dev": [
+            "pytest>=7.0.0",
+            "pytest-cov>=4.0.0",
+            "black>=23.0.0",
+            "flake8>=6.0.0",
+            "mypy>=1.0.0",
+            "ruff>=0.4.0",
+        ],
+    },
     classifiers=[
         "Development Status :: 3 - Alpha",
         "Intended Audience :: Developers",

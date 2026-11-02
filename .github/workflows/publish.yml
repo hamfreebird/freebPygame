@@ -1,0 +1,37 @@
+name: Publish to PyPI
+
+on:
+  release:
+    types: [published]
+  # Also allow manual publishing of a tag like v0.1.2 from the Actions tab.
+  push:
+    tags:
+      - "v*"
+  workflow_dispatch:
+
+jobs:
+  build-and-publish:
+    runs-on: ubuntu-latest
+    # IMPORTANT: configure "Trusted Publishing" for this project on PyPI
+    # (https://pypi.org/manage/project/freepygame/settings/publishing/) so the
+    # upload uses OIDC and no long-lived token is required. If you prefer a
+    # token instead, set PYPI_API_TOKEN and switch the publish step below.
+    permissions:
+      id-token: write
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - name: Build distributions
+        run: |
+          python -m pip install --upgrade pip build
+          python -m build
+
+      - name: Publish to PyPI (Trusted Publishing)
+        uses: pypa/gh-action-pypi-publish@release/v1
+        with:
+          packages-dir: dist/

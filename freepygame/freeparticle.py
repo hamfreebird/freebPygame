@@ -5,6 +5,8 @@ This module provides particle system classes for creating visual effects
 such as explosions, fire, smoke, and fireworks in Pygame games.
 """
 
+from __future__ import annotations
+
 import math
 import random
 from typing import List, Optional, Tuple
@@ -20,6 +22,22 @@ ORANGE = (255, 165, 0)
 GREEN = (0, 255, 0)
 BLUE = (0, 0, 255)
 PURPLE = (160, 32, 240)
+
+# Cache particle sprites by (color, size, alpha) so we don't allocate a new
+# Surface for every particle every frame (the original code created one Surface
+# per Particle instance, which thrashes the GC under heavy particle counts).
+_PARTICLE_SURFACE_CACHE: dict = {}
+
+
+def _get_particle_surface(color, size, alpha=255):
+    key = (color, size, int(alpha))
+    surf = _PARTICLE_SURFACE_CACHE.get(key)
+    if surf is None:
+        surf = pygame.Surface((size, size), pygame.SRCALPHA)
+        surf.fill(color)
+        surf.set_alpha(int(alpha))
+        _PARTICLE_SURFACE_CACHE[key] = surf
+    return surf
 
 
 class Particle(pygame.sprite.Sprite):
@@ -71,8 +89,7 @@ class Particle(pygame.sprite.Sprite):
             Acceleration is typically (0, 0.1) for gravity effects.
         """
         super().__init__()
-        self.image = pygame.Surface((size, size), pygame.SRCALPHA)
-        self.image.fill(color)
+        self.image = _get_particle_surface(color, size)
         self.rect = self.image.get_rect()
         self.pos = pygame.math.Vector2(pos)
         self.velocity = pygame.math.Vector2(velocity)
@@ -98,8 +115,8 @@ class Particle(pygame.sprite.Sprite):
 
         # Fade out effect based on remaining lifespan
         if self.lifespan < 30:
-            alpha = int(255 * (self.lifespan / 30))
-            self.image.set_alpha(alpha)
+            alpha = max(0, min(255, int(255 * (self.lifespan / 30))))
+            self.image = _get_particle_surface(self.color, self.size, alpha)
 
         if self.lifespan <= 0:
             self.kill()
@@ -355,25 +372,14 @@ class Fireworks:
 
         # Draw explosion particles
         for particle in self.explosion_particles:
-            alpha = int(255 * (particle["life"] / 60))
+            alpha = max(0, min(255, int(255 * (particle["life"] / 60))))
             color_with_alpha = (*particle["color"], alpha)
-
-            # Create a temporary surface for alpha blending
-            temp_surface = pygame.Surface(
-                (particle["size"] * 2, particle["size"] * 2), pygame.SRCALPHA
-            )
+            # Draw directly with alpha blending — no per-particle temp Surface.
             pygame.draw.circle(
-                temp_surface,
+                surface,
                 color_with_alpha,
-                (particle["size"], particle["size"]),
+                (int(particle["x"]), int(particle["y"])),
                 particle["size"],
-            )
-            surface.blit(
-                temp_surface,
-                (
-                    int(particle["x"] - particle["size"]),
-                    int(particle["y"] - particle["size"]),
-                ),
             )
 
 

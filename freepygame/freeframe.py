@@ -100,6 +100,8 @@ class FreeFrame:
         self.background_color = background_color
         self.running = False
         self.widgets = []
+        self.focused_widget = None
+        self.mouse_pos = (0, 0)
 
         # Set up display
         pygame.display.set_caption(title)
@@ -153,13 +155,40 @@ class FreeFrame:
             if event.type == pygame.QUIT:
                 self.running = False
             elif event.type == pygame.MOUSEBUTTONDOWN:
-                # Dispatch clicks to registered widgets (buttons, checkboxes,
-                # sliders, etc.). Components without a handle_click method are
-                # skipped. Later-added widgets are checked first (top of stack).
-                for widget in reversed(self.widgets):
-                    handler = getattr(widget, "handle_click", None)
-                    if handler is not None and handler(event.pos):
-                        break
+                self._dispatch_click(event.pos)
+            elif event.type == pygame.MOUSEMOTION:
+                self.mouse_pos = event.pos
+                for widget in self.widgets:
+                    mover = getattr(widget, "on_mouse_move", None)
+                    if mover is not None:
+                        mover(event.pos)
+            elif event.type == pygame.KEYDOWN:
+                focused = getattr(self, "focused_widget", None)
+                if focused is not None:
+                    handler = getattr(focused, "handle_key", None)
+                    if handler is not None:
+                        handler(event)
+
+    def _dispatch_click(self, pos) -> None:
+        """Blur focusable inputs, then forward the click to top-most widget.
+
+        Registered widgets are hit-tested in reverse insertion order (the most
+        recently added is on top). An :class:`InputBox` reclaims focus by
+        returning ``True`` from :meth:`handle_click`, and is then recorded as the
+        frame's ``focused_widget`` so it receives keyboard events.
+        """
+        for widget in self.widgets:
+            blurrer = getattr(widget, "blur", None)
+            if blurrer is not None:
+                blurrer()
+        self.focused_widget = None
+        for widget in reversed(self.widgets):
+            handler = getattr(widget, "handle_click", None)
+            if handler is not None and handler(pos):
+                focuser = getattr(widget, "focus", None)
+                if focuser is not None and getattr(widget, "focused", False):
+                    self.focused_widget = widget
+                break
 
     def update(self) -> None:
         """

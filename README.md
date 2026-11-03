@@ -10,7 +10,10 @@
 
 ## 特性
 
-- 🎨 **丰富的 UI 组件**: 按钮、文本、圆形、图标等
+- 🎨 **丰富的 UI 组件**: 按钮、文本、圆形、图标、进度条、滑块、复选框等
+- 📝 **表单控件**: 输入框（键盘焦点/光标/密码掩码）、下拉选择、开关、单选组
+- 🎭 **主题系统**: 内置 light/dark 调色板，可一键应用到按钮与控件
+- 📐 **自动布局**: VBox / HBox / 锚点布局，自动排布任意 `coordinates` 组件
 - 🔧 **易于使用**: 简单的 API 和直观的接口
 - 🎯 **灵活配置**: 支持颜色、大小、位置等属性动态调整
 - ✨ **特效支持**: 粒子系统、图像处理等高级功能
@@ -260,6 +263,38 @@ ck = CheckBox(screen, [20, 100], size=24, checked=False)
 ck.on_toggle = lambda checked: print("checked:", checked)
 ```
 
+### 表单控件
+
+```python
+from freepygame import InputBox, Dropdown, Switch, RadioButton, RadioGroup
+
+# 文本输入框：点击获得焦点后接收键盘输入
+name = InputBox(screen, [20, 140], width=200, placeholder="请输入姓名")
+name.on_change = lambda v: print("输入:", v)
+name.on_submit = lambda v: print("回车提交:", v)
+
+# 下拉选择框：点击展开，选择后触发回调
+dd = Dropdown(screen, [20, 180], width=200, options=["红", "绿", "蓝"])
+dd.on_select = lambda i, v: print("选中:", i, v)
+
+# 开关
+sw = Switch(screen, [20, 220], checked=False)
+sw.on_change = lambda on: print("开关:", on)
+
+# 单选组
+group = RadioGroup()
+group.add(RadioButton(screen, [20, 260], label="选项A", value="A"))
+group.add(RadioButton(screen, [140, 260], label="选项B", value="B"))
+```
+
+在 `FreeFrame` 中，输入框的焦点与键盘事件会被自动分发：
+
+```python
+app = FreeFrame(title="表单")
+app.add_widget(name)        # 点击输入框自动获得焦点
+# app.run() 时，KEYDOWN 会自动转发给当前获得焦点的输入框
+```
+
 ### 布局管理器
 
 ```python
@@ -308,7 +343,7 @@ freepygame/
 │   ├── freeparticle.py # 粒子系统 / 烟花
 │   ├── freetransformation.py # 图像处理（模糊/取色）
 │   ├── freetheme.py    # 主题系统
-│   ├── freewidget.py   # 基础控件（进度条/滑块/复选框）
+│   ├── freewidget.py   # 基础控件（进度条/滑块/复选框/输入框/下拉/开关/单选）
 │   ├── freelayout.py   # 布局管理器（盒式/锚点）
 │   └── freeframe.py    # 窗口/应用框架
 ├── tests/              # 测试目录

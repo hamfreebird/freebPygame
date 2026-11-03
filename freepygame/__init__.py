@@ -66,7 +66,17 @@ from .freetransformation import (
     map_to_rgba,
 )
 from .freetheme import THEMES, Theme, apply_theme, get_theme
-from .freewidget import CheckBox, ProgressBar, Slider, Widget
+from .freewidget import (
+    CheckBox,
+    Dropdown,
+    InputBox,
+    ProgressBar,
+    RadioButton,
+    RadioGroup,
+    Slider,
+    Switch,
+    Widget,
+)
 from .freelayout import AnchorLayout, HBox, Layout, VBox
 from .freeframe import FreeFrame
 
@@ -113,6 +123,11 @@ __all__ = [
     "ProgressBar",
     "Slider",
     "CheckBox",
+    "InputBox",
+    "Dropdown",
+    "Switch",
+    "RadioButton",
+    "RadioGroup",
     # Layout managers
     "Layout",
     "VBox",

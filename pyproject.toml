@@ -48,6 +48,9 @@ dev = [
 fast = [
     "numpy>=1.21.0",
 ]
+docs = [
+    "sphinx>=5.0",
+]
 
 [tool.setuptools]
 packages = {find = {}}

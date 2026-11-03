@@ -356,6 +356,20 @@ freepygame/
 └── LICENSE.txt        # 许可证文件
 ```
 
+## 文档
+
+API 参考由 Sphinx 自动从各模块 docstring 生成，位于 `docs/` 目录：
+
+```bash
+pip install -e .[docs]          # 安装 sphinx 等文档依赖
+sphinx-build -b html docs docs/_build/html   # 生成 HTML
+# 或在 docs/ 目录下使用 Makefile / make.bat：
+cd docs && make html
+```
+
+生成的文档位于 `docs/_build/html/index.html`。项目已配置 `.readthedocs.yaml`，
+可对接 Read the Docs 实现自动构建。
+
 ## 许可证
 
 本项目采用 Apache License 2.0 许可证。详见 [LICENSE.txt](LICENSE.txt)。

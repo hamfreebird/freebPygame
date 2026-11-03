@@ -20,3 +20,7 @@ env/
 .vscode/
 .idea/
 .DS_Store
+
+# Sphinx documentation build output
+docs/_build/
+docs/.doctrees/

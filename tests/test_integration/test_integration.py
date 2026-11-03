@@ -16,6 +16,7 @@ from freepygame import (
     SuperText,
     array_mean_rgba,
     image_blur_processing,
+    map_to_rgba,
     position_button_class,
 )
 

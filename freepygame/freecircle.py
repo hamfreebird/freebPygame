@@ -15,6 +15,21 @@ import pygame.draw
 import pygame.gfxdraw
 
 
+def _binomial_coefficient(n: int, k: int) -> int:
+    """Return C(n, k) without relying on ``math.comb`` (Python 3.8+).
+
+    Keeps the Bezier helper usable on the project's declared minimum of
+    Python 3.7.
+    """
+    if k < 0 or k > n:
+        return 0
+    k = min(k, n - k)
+    result = 1
+    for i in range(1, k + 1):
+        result = result * (n - k + i) // i
+    return result
+
+
 def _degree_to_radians(_degree: float) -> float:
     """
     Convert degrees to radians.
@@ -128,17 +143,17 @@ class FreeAllCircle:
         if len(points) < 2:
             return
 
+        steps = max(1, int(steps))
+
         def bezier_point(t: float) -> tuple[float, float]:
             n = len(points) - 1
             x = 0.0
             y = 0.0
             for i, (px, py) in enumerate(points):
-                coeff = math.comb(n, i) * (t**i) * ((1 - t) ** (n - i)) if n >= i else 0
+                coeff = _binomial_coefficient(n, i) * (t**i) * ((1 - t) ** (n - i))
                 x += px * coeff
                 y += py * coeff
             return (x, y)
-
-        import math
 
         prev_point = bezier_point(0)
         for i in range(1, steps + 1):
@@ -424,10 +439,11 @@ class FreeCircle:
 
     def draw_bezier(self, surface, points, steps, color=(0, 0, 0)):
         """Draw a B\u00e9zier curve using this circle's color when color==self.color."""
-        if color != self.color:
-            pygame.gfxdraw.bezier(surface, points, steps, color)
-        else:
-            pygame.gfxdraw.bezier(surface, points, steps, self.color)
+        # Reuse the self-implemented sampler instead of ``pygame.gfxdraw.bezier``:
+        # the stock pygame package does not provide that function, so calling it
+        # would raise AttributeError. See ``FreeAllCircle.draw_bezier``.
+        draw_color = color if color != self.color else self.color
+        FreeAllCircle.draw_bezier(surface, points, steps, draw_color)
 
 
 class SuperCircle(FreeCircle, FreeAllCircle):

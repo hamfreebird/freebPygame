@@ -5,7 +5,7 @@ This library provides a collection of UI components and utilities for Pygame gam
 development, including buttons, text rendering, circles, icons, particle systems,
 and image processing tools.
 
-Version: 0.1.0
+Version: 0.1.4
 Author: freebird
 License: Apache License 2.0
 
@@ -35,7 +35,7 @@ Example usage:
     ... )
 """
 
-__version__ = "0.1.0"
+__version__ = "0.1.4"
 __author__ = "freebird"
 __license__ = "Apache License 2.0"
 

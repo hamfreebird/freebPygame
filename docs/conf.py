@@ -18,7 +18,7 @@ sys.path.insert(0, os.path.abspath(".."))
 project = "freepygame"
 copyright = "2026, freebird"
 author = "freebird"
-release = "0.1.0"
+release = "0.1.4"
 version = "0.1"
 
 # -- General configuration ----------------------------------------------------

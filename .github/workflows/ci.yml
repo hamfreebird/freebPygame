@@ -7,7 +7,10 @@ on:
 
 jobs:
   test:
-    runs-on: ubuntu-latest
+    # Pin to 24.04: `ubuntu-latest` now resolves to 26.04, for which
+    # actions/setup-python has no Python 3.9 build (3.9 is EOL). 24.04 still
+    # ships prebuilt 3.9-3.12 toolchains.
+    runs-on: ubuntu-24.04
     # Python 3.7/3.8 are still supported by the library (via
     # `from __future__ import annotations`) but are EOL and unavailable as
     # GitHub Actions runners, so the matrix starts at 3.9.

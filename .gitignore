@@ -24,3 +24,6 @@ env/
 # Sphinx documentation build output
 docs/_build/
 docs/.doctrees/
+
+# pypi token
+token.txt

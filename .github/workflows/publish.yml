@@ -3,7 +3,7 @@ name: Publish to PyPI
 on:
   release:
     types: [published]
-  # Also allow manual publishing of a tag like v0.1.2 from the Actions tab.
+  # Manual publishing from the Actions tab (tag like v0.1.4).
   push:
     tags:
       - "v*"
@@ -12,12 +12,14 @@ on:
 jobs:
   build-and-publish:
     runs-on: ubuntu-latest
-    # IMPORTANT: configure "Trusted Publishing" for this project on PyPI
-    # (https://pypi.org/manage/project/freepygame/settings/publishing/) so the
-    # upload uses OIDC and no long-lived token is required. If you prefer a
-    # token instead, set PYPI_API_TOKEN and switch the publish step below.
+    # Two supported authentication modes:
+    #   1. Repository secret PYPI_API_TOKEN (simplest): used when present.
+    #   2. PyPI Trusted Publishing (OIDC): used otherwise. Requires
+    #      https://pypi.org/manage/project/freepygame/settings/publishing/
+    #      to be configured for this repository + publish.yml.
     permissions:
       id-token: write
+      contents: read
     steps:
       - uses: actions/checkout@v5
 
@@ -31,7 +33,30 @@ jobs:
           python -m pip install --upgrade pip build
           python -m build
 
+      - name: Select PyPI authentication mode
+        id: auth
+        env:
+          PYPI_API_TOKEN: ${{ secrets.PYPI_API_TOKEN }}
+        run: |
+          if [ -n "$PYPI_API_TOKEN" ]; then
+            echo "mode=token" >> "$GITHUB_OUTPUT"
+            echo "Using PYPI_API_TOKEN secret."
+          else
+            echo "mode=trusted" >> "$GITHUB_OUTPUT"
+            echo "PYPI_API_TOKEN not set; falling back to Trusted Publishing."
+          fi
+
+      - name: Publish to PyPI (API token)
+        if: steps.auth.outputs.mode == 'token'
+        uses: pypa/gh-action-pypi-publish@release/v1
+        with:
+          password: ${{ secrets.PYPI_API_TOKEN }}
+          packages-dir: dist/
+          skip-existing: true
+
       - name: Publish to PyPI (Trusted Publishing)
+        if: steps.auth.outputs.mode == 'trusted'
         uses: pypa/gh-action-pypi-publish@release/v1
         with:
           packages-dir: dist/
+          skip-existing: true
